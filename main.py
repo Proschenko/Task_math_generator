@@ -1,11 +1,18 @@
+import pickle
+
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget, QSpinBox, QTextEdit, QComboBox
+from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget, QSpinBox, QTextEdit, QComboBox, \
+    QCheckBox, QPushButton, QLineEdit, QLabel
 from PyQt5.QtWidgets import QDoubleSpinBox, QMessageBox
 
 
 class Ui_MainWindow(object):
+    def __init__(self):
+        self.array_list_areascroll = None
+
     def setupUi(self, MainWindow):
+        # region setup
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(1161, 911)
         self.centralwidget = QtWidgets.QWidget(MainWindow)
@@ -170,9 +177,12 @@ class Ui_MainWindow(object):
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
+        # endregion
+
         # Хранилище виджетов + данных для задач
         self.comboboxs_generator = []
         self.comboboxs_solution = []
+        self.textedits_generator=[]
 
         self.tabels_generator = []
         self.tabels_solution = []
@@ -230,8 +240,8 @@ class Ui_MainWindow(object):
 
         # Кнопки взаимодействия с очередью действий решения
         self.button_add_solution.clicked.connect(self.add_combobox_queue_solution)
-        self.button_delete_solution.clicked.connect(self.delete_last_combobox_queue_solution)
-
+        #self.button_delete_solution.clicked.connect(self.delete_last_combobox_queue_solution)
+        self.button_delete_solution.clicked.connect(self.hellper_function)
         # Кнопки генерации примера задачи и ответа к ней
         self.button_example_text.clicked.connect(lambda: self.show_example_text(True))
         self.button_answer.clicked.connect(lambda: self.show_example_answer(True))
@@ -240,18 +250,31 @@ class Ui_MainWindow(object):
         self.button_add_const.clicked.connect(self.add_const)
         self.button_delete_const.clicked.connect(self.delete_const)
 
-        # Кнопка в "Загрузки"
-        self.button_to_download.clicked.connect(self.open_download_folder)
-        # Кнопка генерации задач
-        self.button_save_and_generate.clicked.connect(self.handler_generation_tasks)
+        # Правильно
+        # # Кнопка в "Загрузки"
+        # self.button_to_download.clicked.connect(self.open_download_folder)
+        # # Кнопка генерации задач
+        # self.button_save_and_generate.clicked.connect(self.handler_generation_tasks)
+
+        # тест новой фичи
+        self.array_list_areascroll = [self.scrollAreaWidgetContents_1,
+                                      self.scrollAreaWidgetContents_2,
+                                      self.scrollAreaWidgetContents_3,
+                                      self.scrollAreaWidgetContents_4,
+                                      self.scrollAreaWidgetContents_5]
+
+        self.button_save_and_generate.clicked.connect(self.save_state)
+        self.button_to_download.clicked.connect(self.load_state)
+        self.state_file = "widget_state.pickle"
+
+        self.unique_key_id = 1000
 
         # Смена tab_index подгрузка констант в массив значений КОСТЫЛЬ придумать как решить !!!!
         self.tabWidget.currentChanged.connect(self.smth_const)
         # Установка подсказок для кнопок
         # Потом как-нибудь
 
-    # ====WorkPlace Generation ========================================================================================
-    # to be continued
+    # region WorkPlace Generation
     generators_dict = {
         'Сгенерировать целое число': [['Индекс'],
                                       ['Название'],
@@ -282,18 +305,23 @@ class Ui_MainWindow(object):
                                ['Максимальное количество ребер из вершины', 2, 20]]
     }
 
-    # Ready
+    def dynamic_named_widgets(self, widget_inner):
+        tmp_string = f"_{self.unique_key_id}"
+        self.unique_key_id += 1
+        return f"{widget_inner.objectName()}{tmp_string}"
+
     def add_text_edit(self):
         text_edit = QtWidgets.QTextEdit(self.scrollAreaWidgetContents_1)
         text_edit.setText("Изменяемое константное поле")
+        self.textedits_generator.append(text_edit)
         # Дополнительные настройки для виджета QTextEdit...
         self.vertical_layout.addWidget(text_edit)
 
-    # Ready
     def add_combobox_generator(self):
         # Создаем комбобокс и заполняем его из словаря
         combobox = QtWidgets.QComboBox(self.scrollAreaWidgetContents_1)
         combobox.addItems(self.generators_dict.keys())
+
 
         self.comboboxs_generator.append(combobox)
         self.vertical_layout.addWidget(combobox)
@@ -340,7 +368,6 @@ class Ui_MainWindow(object):
         self.index_values_generator += 1
         self.event_combobox_generator_changed()
 
-    # Ready
     def delete_last_combobox_generator(self):
         # Получаем список всех виджетов в ScrollArea
         widgets1 = self.scrollAreaWidgetContents_1.layout().parent().children()
@@ -368,7 +395,6 @@ class Ui_MainWindow(object):
             widget.deleteLater()
         self.event_combobox_generator_changed()
 
-    # Ready
     def event_combobox_generator_changed(self):
         def create_handler(index_to_replace_inner):
             def handler():
@@ -381,7 +407,6 @@ class Ui_MainWindow(object):
             handler = create_handler(index_to_replace)
             tmp.currentIndexChanged.connect(handler)
 
-    # Ready
     def handle_combobox_generator_change(self, index_table_to_replace_inner):
 
         new_table = QTableWidget(self.tab_2)
@@ -424,7 +449,6 @@ class Ui_MainWindow(object):
         self.tabels_generator[index_table_to_replace_inner] = new_table
         old_table.setParent(None)
 
-    # work, but to be continued
     def smth_generator(self, index, table_generate_index):
         try:
             # Получение списка таблиц из ScrollArea3
@@ -488,10 +512,8 @@ class Ui_MainWindow(object):
             self.show_popup_critical("Ошибка",
                                      "Неизвестная ошибка, попробуйте перепроверить введенные параметры генерации\n")
 
-    # ====WorkPlace Generation ========================================================================================
-
-    # ====WorkPlace Solution Queue=====================================================================================
-    # to be continued
+    # endregion WorkPlace Generation
+    # region WorkPlace Solution Queue
     solution_dict = {
         "Сложение": [['Индекс'],
                      ['Название'],
@@ -546,7 +568,6 @@ class Ui_MainWindow(object):
                                                        ['Граф']]
     }
 
-    # Ready
     def add_combobox_queue_solution(self):
         combobox = QtWidgets.QComboBox(self.scrollAreaWidgetContents_2)
         combobox.addItems(self.solution_dict.keys())
@@ -595,7 +616,6 @@ class Ui_MainWindow(object):
         self.index_values_solution += 1
         self.event_combobox_solution_changed()
 
-    # Ready
     def delete_last_combobox_queue_solution(self):
         # Получаем список всех виджетов в ScrollArea
         widgets = self.scrollAreaWidgetContents_2.layout().parent().children()
@@ -620,7 +640,6 @@ class Ui_MainWindow(object):
             widget.setParent(None)
             widget.deleteLater()
 
-    # Ready
     def event_combobox_solution_changed(self):
         def create_handler(index):
             def handler():
@@ -633,7 +652,6 @@ class Ui_MainWindow(object):
             handler = create_handler(index_to_replace)
             tmp.currentIndexChanged.connect(handler)
 
-    # Ready
     def handle_combobox_solution_change(self, index_table_to_replace_inner):
         new_table = QTableWidget(self.tab_3)
         new_table.verticalHeader().setVisible(False)
@@ -677,7 +695,6 @@ class Ui_MainWindow(object):
         self.tabels_solution[index_table_to_replace_inner] = new_table
         old_table.setParent(None)
 
-    # work, but to be continued
     def smth_solution(self, index_combobox, table_solution_index):
         try:
             # Получение списка таблиц из ScrollArea4
@@ -799,9 +816,8 @@ class Ui_MainWindow(object):
         except Exception:
             self.show_popup_critical("Ошибка", "Неизвестная ошибка, попробуйте перепроверить введенные параметры\n")
 
-    # ====WorkPlace Solution Queue======================================================================================
-    # ====WorkPlace Const===============================================================================================
-    # Ready
+    # endregion WorkPlace Solution Queue
+    # regionWorkPlace Constregion
     def add_const(self):
         tmp_dict = {
             "Название константы": [['Индекс'],
@@ -849,7 +865,6 @@ class Ui_MainWindow(object):
         self.vertical_layout5.addWidget(table)
         self.index_values_const += 1
 
-    # Ready
     def delete_const(self):
         # Получаем список всех виджетов в ScrollArea
         widgets = self.scrollAreaWidgetContents_5.layout().parent().children()
@@ -863,7 +878,6 @@ class Ui_MainWindow(object):
             widget.deleteLater()
             self.index_values_const -= 1
 
-    # Ready
     def smth_const(self):
         # Получение списка таблиц из ScrollArea4
         table_widgets_scrollArea_5 = []
@@ -887,8 +901,8 @@ class Ui_MainWindow(object):
 
             self.global_values_generation_and_solutions[index_value_const] = values_spinbox[0]
 
-    # ====WorkPlace Const===============================================================================================
-    # ====Workplace example task========================================================================================
+    # endregion WorkPlace Constregion
+    # region Workplace example task
     # Получаем текст задания
     def show_example_text(self, choice):
         result_string = "::Вопрос :: "
@@ -938,10 +952,9 @@ class Ui_MainWindow(object):
                 self.smth_solution(widget.currentIndex(), j)
                 j += 1
 
-    # ====Workplace example task========================================================================================
-    # ====Workplace save tasks==========================================================================================
+    # endregion Workplace example task
+    # region Workplace save tasks
     # Кнопка в загрузки
-    # Ready
     @staticmethod
     def open_download_folder():
         download_folder = os.path.expanduser("~\Downloads")
@@ -953,7 +966,6 @@ class Ui_MainWindow(object):
             # Для других операционных систем открываем папку загрузки в файловом менеджере
             os.system(f'xdg-open "{download_folder}"')
 
-    # Ready
     def handler_generation_tasks(self):
         count_task = self.spinBox.value()
         array_task = []
@@ -964,7 +976,6 @@ class Ui_MainWindow(object):
             array_task.append(result_string)
         self.create_txt_file(array_task, "Your_tasks", "")
 
-    # Ready
     def create_txt_file(self, mas_line, name_file, directory_file):
         # Получаем путь к папке "Загрузки" на текущей операционной системе
         downloads_path = os.path.join(os.path.expanduser("~"), "Downloads")
@@ -992,8 +1003,8 @@ class Ui_MainWindow(object):
                                     "Файл:" + name_file + " " + str(counter_file_in_directory - 1)
                                     + ".txt успешно сохранен, проверьте папку загрузки")
 
-    # ====Workplace save tasks==========================================================================================
-    # ====Workplace MessageBox==========================================================================================
+    # endregion Workplace save tasks
+    # region Workplace MessageBox
     @staticmethod
     def show_popup_information(messagebox_title_inner: str, content_text_inner: str):
         message_box = QMessageBox()
@@ -1027,8 +1038,118 @@ class Ui_MainWindow(object):
 
         message_box.exec_()
 
-    # ====Workplace MessageBox==========================================================================================
-    # =================================================================================================================
+    # endregion Workplace MessageBox
+
+    # region feature/save_load_pickle
+
+    def extract_widgets(self,table):
+        second_row_widgets = []
+
+        for column in range(table.columnCount()):
+            item = table.cellWidget(1, column)
+            if item:
+                second_row_widgets.append(item)
+
+        for widget in second_row_widgets:
+            if isinstance(widget, QLabel):
+                print('Label:', widget.text())
+            elif isinstance(widget, QLineEdit):
+                print('LineEdit:', widget.text())
+            elif isinstance(widget, QComboBox):
+                print('ComboBox:', widget.currentText())
+            elif isinstance(widget, QPushButton):
+                print('Button: Clicked!')
+            elif isinstance(widget, QDoubleSpinBox):
+                print('doubleSpinBox: ', widget.value())
+            elif isinstance(widget, QSpinBox):
+                print('SpinBox: ', widget.value())
+        return second_row_widgets
+
+    def flatten_widget_list(self,widget_list):
+        flat_list = []
+        for widget in widget_list:
+            if isinstance(widget, list):
+                flat_list.extend(self.flatten_widget_list(widget))
+            else:
+                flat_list.append(widget)
+        return flat_list
+
+
+    def hellper_function(self):
+        # Пример использования:
+        widget_list = []
+        widget_list.extend(self.comboboxs_generator)
+        widget_list.extend(self.comboboxs_solution)
+        widget_list.extend(self.textedits_generator)
+        widget_list.extend(self.tabels_solution)
+        widget_list.extend(self.tabels_generator)
+        widget_list.extend(self.tabels_const)
+
+        flat_widget_list = self.flatten_widget_list(widget_list)
+
+        # Обработка таблиц и извлечение детей из них
+        for i, widget in enumerate(flat_widget_list):
+            if isinstance(widget, QTableWidget):
+                children = self.extract_widgets(widget)
+                if children is not None:
+                    flat_widget_list.pop(i)
+                    flat_widget_list.extend(children)
+
+        self.show_popup_information("info_widget" ,str(flat_widget_list))
+        # Теперь flat_widget_list содержит все виджеты, включая детей из таблиц
+
+    def save_state(self):
+        state = {}
+        self.save_widget_state(self.scrollAreaWidgetContents_1, state)
+        with open(self.state_file, 'wb') as file:
+            pickle.dump(state, file)
+
+    def load_state(self):
+        try:
+            with open(self.state_file, 'rb') as file:
+                state = pickle.load(file)
+            self.load_widget_state(self.scrollAreaWidgetContents_1, state)
+        except FileNotFoundError:
+            print("Файл состояния не найден.")
+
+    def save_widget_state(self, widget, state):
+        if isinstance(widget, QComboBox):
+            state[widget.objectName()] = widget.currentIndex()
+
+        elif isinstance(widget, QCheckBox):
+            state[widget.objectName()] = widget.isChecked()
+
+        elif isinstance(widget, QSpinBox):
+            state[widget.objectName()] = widget.value()
+
+        elif isinstance(widget, QDoubleSpinBox):
+            state[widget.objectName()] = widget.value()
+
+        elif isinstance(widget, QTextEdit):
+            state[widget.objectName()] = widget.toPlainText()
+
+        # Рекурсивно обходите детей виджета
+        for child_widget in widget.findChildren(QWidget, Qt.FindDirectChildrenOnly):
+            self.save_widget_state(child_widget, state)
+
+    def load_widget_state(self, widget, state):
+        if widget.objectName() in state:
+            if isinstance(widget, QComboBox):
+                widget.setCurrentIndex(state[widget.objectName()])
+            elif isinstance(widget, QCheckBox):
+                widget.setChecked(state[widget.objectName()])
+            elif isinstance(widget, QSpinBox):
+                widget.setValue(state[widget.objectName()])
+            elif isinstance(widget, QDoubleSpinBox):
+                widget.setValue(state[widget.objectName()])
+            elif isinstance(widget, QTextEdit):
+                widget.setPlainText(state[widget.objectName()])
+
+        # Рекурсивно обходите детей виджета
+        for child_widget in widget.findChildren(QWidget, Qt.FindDirectChildrenOnly):
+            self.load_widget_state(child_widget, state)
+
+    # endregion
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "Universal generator MVP 1.1v by ЦЕХ"))
@@ -1059,7 +1180,7 @@ class Ui_MainWindow(object):
         self.label_9.setText(_translate("MainWindow", "Выполнено студентами ТюмГУ МОиАИС"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_4),
                                   _translate("MainWindow", "Настройка констант и ответа"))
-        # ====Workplace ToolTips=====================================================================================
+        # regionWorkplace ToolTips
         self.button_answer.setToolTip(
             _translate("MainWindow", "Вычисляет ответ к сгенерированной задаче и выводит его в поле \"Ответ\""))
         self.textEdit_2.setToolTip(
@@ -1114,6 +1235,3 @@ if __name__ == "__main__":
     ui.setupUi(MainWindow)
     MainWindow.show()
     sys.exit(app.exec_())
-# ctrl+Z
-# Установка подсказок для кнопок
-# Потом как-нибудь
