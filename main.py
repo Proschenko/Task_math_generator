@@ -7,6 +7,9 @@ from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget
 from PyQt5.QtWidgets import QDoubleSpinBox, QMessageBox
 
 
+import qdarkstyle
+
+
 class Ui_MainWindow(object):
     def __init__(self):
         self.array_list_areascroll = None
@@ -241,7 +244,7 @@ class Ui_MainWindow(object):
         # Кнопки взаимодействия с очередью действий решения
         self.button_add_solution.clicked.connect(self.add_combobox_queue_solution)
         #self.button_delete_solution.clicked.connect(self.delete_last_combobox_queue_solution)
-        self.button_delete_solution.clicked.connect(self.hellper_function)
+        self.button_delete_solution.clicked.connect(self.handler_save_formstate)
         # Кнопки генерации примера задачи и ответа к ней
         self.button_example_text.clicked.connect(lambda: self.show_example_text(True))
         self.button_answer.clicked.connect(lambda: self.show_example_answer(True))
@@ -271,8 +274,8 @@ class Ui_MainWindow(object):
 
         # Смена tab_index подгрузка констант в массив значений КОСТЫЛЬ придумать как решить !!!!
         self.tabWidget.currentChanged.connect(self.smth_const)
-        # Установка подсказок для кнопок
-        # Потом как-нибудь
+        print(self.button_answer.objectName())
+
 
     # region WorkPlace Generation
     generators_dict = {
@@ -305,10 +308,7 @@ class Ui_MainWindow(object):
                                ['Максимальное количество ребер из вершины', 2, 20]]
     }
 
-    def dynamic_named_widgets(self, widget_inner):
-        tmp_string = f"_{self.unique_key_id}"
-        self.unique_key_id += 1
-        return f"{widget_inner.objectName()}{tmp_string}"
+    
 
     def add_text_edit(self):
         text_edit = QtWidgets.QTextEdit(self.scrollAreaWidgetContents_1)
@@ -833,6 +833,7 @@ class Ui_MainWindow(object):
         # Устанавливаем размеры таблицы
         table.setRowCount(2)
         table.setColumnCount(len(values))
+        self.tabels_const.append(table)
         # Заполняем ячейки таблицы
 
         for j in range(len(values)):
@@ -876,6 +877,8 @@ class Ui_MainWindow(object):
 
             widget.setParent(None)
             widget.deleteLater()
+            # Удаляем последний добавленный виджет
+            self.tabels_const.pop(-1)
             self.index_values_const -= 1
 
     def smth_const(self):
@@ -1042,7 +1045,59 @@ class Ui_MainWindow(object):
 
     # region feature/save_load_pickle
 
+    def handler_save_formstate(self):
+        """
+        Функция запуска сохранения пресета (состояния формы)
+        :return:
+        """
+        # Пример использования:
+        widget_list = []
+        widget_list.extend(self.comboboxs_generator)
+        widget_list.extend(self.comboboxs_solution)
+        widget_list.extend(self.textedits_generator)
+        widget_list.extend(self.tabels_solution)
+        widget_list.extend(self.tabels_generator)
+        widget_list.extend(self.tabels_const)
+        widget_list.append(self.spinBox_answer_index)
+
+        flat_widget_list = self.flatten_widget_list(widget_list)
+
+        # Обработка таблиц и извлечение детей из них
+        for i, widget in enumerate(flat_widget_list):
+            if isinstance(widget, QTableWidget):
+                children = self.extract_widgets(widget)
+                if children is not None:
+                    flat_widget_list.extend(children)
+
+
+        filtered_widget_list=[widget for widget in flat_widget_list if not isinstance(widget, QTableWidget)]
+
+        # name tables
+        for widget in filtered_widget_list:
+            tmp = self.dynamic_named_widgets(widget)
+            widget.setObjectName(tmp)
+            print(tmp)
+
+
+
+        self.save_state(filtered_widget_list)
+    def dynamic_named_widgets(self, widget_inner):
+        """
+        function -> get name for widget
+        
+        :param widget_inner:  any widget from pyqt5 
+        :return:  str -> unique_name for widget
+        """
+        tmp_string = f"_{self.unique_key_id}"
+        self.unique_key_id += 1
+        return f"{str(type(widget_inner).__name__)}{tmp_string}"
     def extract_widgets(self,table):
+        """
+        Высокоуровневую таблицу  приводит к низкоуровневым виджетам
+        
+        :param table:  входная таблица размерами 2*n 
+        :return:  список виджетов хранящихся во второй строке таблицы
+        """
         second_row_widgets = []
 
         for column in range(table.columnCount()):
@@ -1066,6 +1121,12 @@ class Ui_MainWindow(object):
         return second_row_widgets
 
     def flatten_widget_list(self,widget_list):
+        """
+        упрощает многомерный список до одномерного
+        [[][][]] -> []
+        :param widget_list:  многомерный список виджетов
+        :return:  одномерный список виджетов
+        """
         flat_list = []
         for widget in widget_list:
             if isinstance(widget, list):
@@ -1074,63 +1135,53 @@ class Ui_MainWindow(object):
                 flat_list.append(widget)
         return flat_list
 
-
-    def hellper_function(self):
-        # Пример использования:
-        widget_list = []
-        widget_list.extend(self.comboboxs_generator)
-        widget_list.extend(self.comboboxs_solution)
-        widget_list.extend(self.textedits_generator)
-        widget_list.extend(self.tabels_solution)
-        widget_list.extend(self.tabels_generator)
-        widget_list.extend(self.tabels_const)
-
-        flat_widget_list = self.flatten_widget_list(widget_list)
-
-        # Обработка таблиц и извлечение детей из них
-        for i, widget in enumerate(flat_widget_list):
-            if isinstance(widget, QTableWidget):
-                children = self.extract_widgets(widget)
-                if children is not None:
-                    flat_widget_list.pop(i)
-                    flat_widget_list.extend(children)
-
-        self.show_popup_information("info_widget" ,str(flat_widget_list))
-        # Теперь flat_widget_list содержит все виджеты, включая детей из таблиц
-
-    def save_state(self):
+    def save_state(self, widget_list):
+        """
+        Сериализует и сохраняет данные в рабочей директории с расширением *.pickle
+        :return: 
+        """
         state = {}
-        self.save_widget_state(self.scrollAreaWidgetContents_1, state)
+        self.save_widget_state(widget_list, state)
         with open(self.state_file, 'wb') as file:
             pickle.dump(state, file)
+            self.show_popup_information("успех", "успешно сохранено")
 
-    def load_state(self):
+    def load_state(self, widget_list):
+        """
+        Загружает  данные из рабочей директории, а именно из файла с расширением *.pickle
+        Загрузка пресета
+        :return:
+        """
         try:
             with open(self.state_file, 'rb') as file:
                 state = pickle.load(file)
-            self.load_widget_state(self.scrollAreaWidgetContents_1, state)
+            self.load_widget_state(widget_list, state)
         except FileNotFoundError:
-            print("Файл состояния не найден.")
+            self.show_popup_critical("Безуспешный поиск","Файл состояния не найден.")
 
     def save_widget_state(self, widget, state):
+        """
+        Реализация сериализации данных
+        :param widget:  виджет
+        :param state:   словарь куда идет запись состояние
+        :return: обновленный словарь
+        """
         if isinstance(widget, QComboBox):
             state[widget.objectName()] = widget.currentIndex()
 
         elif isinstance(widget, QCheckBox):
             state[widget.objectName()] = widget.isChecked()
 
-        elif isinstance(widget, QSpinBox):
+        elif isinstance(widget, QDoubleSpinBox):
             state[widget.objectName()] = widget.value()
 
-        elif isinstance(widget, QDoubleSpinBox):
+        elif isinstance(widget, QSpinBox):
             state[widget.objectName()] = widget.value()
 
         elif isinstance(widget, QTextEdit):
             state[widget.objectName()] = widget.toPlainText()
 
-        # Рекурсивно обходите детей виджета
-        for child_widget in widget.findChildren(QWidget, Qt.FindDirectChildrenOnly):
-            self.save_widget_state(child_widget, state)
+
 
     def load_widget_state(self, widget, state):
         if widget.objectName() in state:
@@ -1230,6 +1281,7 @@ if __name__ == "__main__":
     from My_exceptions import My_exceptions
 
     app = QtWidgets.QApplication(sys.argv)
+    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     MainWindow = QtWidgets.QMainWindow()
     ui = Ui_MainWindow()
     ui.setupUi(MainWindow)
