@@ -22,6 +22,7 @@ class Ui_MainWindow(object):
         self.centralwidget.setObjectName("centralwidget")
         self.tabWidget = QtWidgets.QTabWidget(self.centralwidget)
         self.tabWidget.setGeometry(QtCore.QRect(0, 0, 1161, 871))
+        self.tabWidget.setStyleSheet("")
         self.tabWidget.setTabPosition(QtWidgets.QTabWidget.North)
         self.tabWidget.setTabShape(QtWidgets.QTabWidget.Rounded)
         self.tabWidget.setObjectName("tabWidget")
@@ -138,7 +139,7 @@ class Ui_MainWindow(object):
         self.scrollArea_5 = QtWidgets.QScrollArea(self.tab_4)
         self.scrollArea_5.setGeometry(QtCore.QRect(40, 110, 551, 651))
         self.scrollArea_5.setWidgetResizable(True)
-        self.scrollArea_5.setObjectName("scrollArea")
+        self.scrollArea_5.setObjectName("scrollArea_5")
         self.scrollAreaWidgetContents_5 = QtWidgets.QWidget()
         self.scrollAreaWidgetContents_5.setGeometry(QtCore.QRect(0, 0, 549, 649))
         self.scrollAreaWidgetContents_5.setObjectName("scrollAreaWidgetContents_5")
@@ -161,9 +162,9 @@ class Ui_MainWindow(object):
         self.spinBox_answer_index.setGeometry(QtCore.QRect(830, 170, 101, 71))
         self.spinBox_answer_index.setAlignment(QtCore.Qt.AlignCenter)
         self.spinBox_answer_index.setButtonSymbols(QtWidgets.QAbstractSpinBox.NoButtons)
-        self.spinBox_answer_index.setObjectName("spinBox_answer_index")
         self.spinBox_answer_index.setMinimum(100)
         self.spinBox_answer_index.setMaximum(399)
+        self.spinBox_answer_index.setObjectName("spinBox_answer_index")
         self.label_9 = QtWidgets.QLabel(self.tab_4)
         self.label_9.setGeometry(QtCore.QRect(740, 540, 281, 71))
         self.label_9.setTextFormat(QtCore.Qt.AutoText)
@@ -176,13 +177,49 @@ class Ui_MainWindow(object):
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 1161, 26))
         self.menubar.setObjectName("menubar")
+        self.menu = QtWidgets.QMenu(self.menubar)
+        self.menu.setObjectName("menu")
+        self.menu_2 = QtWidgets.QMenu(self.menubar)
+        self.menu_2.setObjectName("menu_2")
+        self.menu_3 = QtWidgets.QMenu(self.menu_2)
+        self.menu_3.setObjectName("menu_3")
         MainWindow.setMenuBar(self.menubar)
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
+        self.action_save_state = QtWidgets.QAction(MainWindow)
+        self.action_save_state.setObjectName("action_save_state")
+        self.action_load_state = QtWidgets.QAction(MainWindow)
+        self.action_load_state.setObjectName("action_load_state")
+        self.action_avtor = QtWidgets.QAction(MainWindow)
+        self.action_avtor.setObjectName("action_avtor")
+        self.action_info_gen = QtWidgets.QAction(MainWindow)
+        self.action_info_gen.setObjectName("action_info_gen")
+        self.action_info_solution = QtWidgets.QAction(MainWindow)
+        self.action_info_solution.setObjectName("action_info_solution")
+        self.action_client_instruction = QtWidgets.QAction(MainWindow)
+        self.action_client_instruction.setObjectName("action_client_instruction")
+        self.action_clean_state = QtWidgets.QAction(MainWindow)
+        self.action_clean_state.setObjectName("action_clean_state")
+        self.action_2 = QtWidgets.QAction(MainWindow)
+        self.action_2.setObjectName("action_2")
+        self.menu.addAction(self.action_save_state)
+        self.menu.addAction(self.action_load_state)
+        self.menu.addSeparator()
+        self.menu.addAction(self.action_clean_state)
+        self.menu_3.addSeparator()
+        self.menu_3.addAction(self.action_info_gen)
+        self.menu_3.addAction(self.action_info_solution)
+        self.menu_2.addAction(self.action_client_instruction)
+        self.menu_2.addAction(self.menu_3.menuAction())
+        self.menu_2.addAction(self.action_avtor)
+        self.menubar.addAction(self.menu.menuAction())
+        self.menubar.addAction(self.menu_2.menuAction())
+
         # endregion
 
-        # Хранилище виджетов + данных для задач
+
+        #region Хранилище виджетов + данных для задач
         self.comboboxs_generator = []
         self.comboboxs_solution = []
         self.textedits_generator=[]
@@ -200,16 +237,17 @@ class Ui_MainWindow(object):
         self.button_answer.setEnabled(False)
         MainWindow.setFixedSize(1161, 911)
         self.spinBox_answer_index.setValue(200)
-        # конец
+        # endregion
 
+        #region setup2
         self.retranslateUi(MainWindow)
         self.tabWidget.setCurrentIndex(0)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
         MainWindow.setWindowIcon(QtGui.QIcon("icon.ico"))
-
+        #endregion
         # mine add
 
-        # Создаем вертикальный компоновщик для всех scrollArea
+        # region Создаем вертикальный компоновщик для всех scrollArea
         self.vertical_layout = QtWidgets.QVBoxLayout(self.scrollAreaWidgetContents_1)
         self.vertical_layout.setContentsMargins(5, 5, 5, 5)
         self.vertical_layout.setSpacing(6)
@@ -235,6 +273,8 @@ class Ui_MainWindow(object):
         self.vertical_layout5.setSpacing(6)
         self.scrollAreaWidgetContents_5.setLayout(self.vertical_layout5)
 
+        #endregion\
+
         # Всякие события:
         # Кнопки взаимодействия с основной рабочей областью
         self.button_add_const_field.clicked.connect(self.add_text_edit)
@@ -243,38 +283,44 @@ class Ui_MainWindow(object):
 
         # Кнопки взаимодействия с очередью действий решения
         self.button_add_solution.clicked.connect(self.add_combobox_queue_solution)
-        #self.button_delete_solution.clicked.connect(self.delete_last_combobox_queue_solution)
-        self.button_delete_solution.clicked.connect(self.handler_save_formstate)
+        self.button_delete_solution.clicked.connect(self.delete_last_combobox_queue_solution)
         # Кнопки генерации примера задачи и ответа к ней
-        self.button_example_text.clicked.connect(lambda: self.show_example_text(True))
+        #self.button_example_text.clicked.connect(lambda: self.show_example_text(True))
         self.button_answer.clicked.connect(lambda: self.show_example_answer(True))
 
         # Кнопки взаимодействия с константами
         self.button_add_const.clicked.connect(self.add_const)
         self.button_delete_const.clicked.connect(self.delete_const)
 
-        # Правильно
-        # # Кнопка в "Загрузки"
-        # self.button_to_download.clicked.connect(self.open_download_folder)
-        # # Кнопка генерации задач
-        # self.button_save_and_generate.clicked.connect(self.handler_generation_tasks)
+        # Кнопка в "Загрузки"
+        self.button_to_download.clicked.connect(self.open_download_folder)
+        # Кнопка генерации задач
+        self.button_save_and_generate.clicked.connect(self.handler_generation_tasks)
 
         # тест новой фичи
-        self.array_list_areascroll = [self.scrollAreaWidgetContents_1,
-                                      self.scrollAreaWidgetContents_2,
-                                      self.scrollAreaWidgetContents_3,
-                                      self.scrollAreaWidgetContents_4,
-                                      self.scrollAreaWidgetContents_5]
+        # self.array_list_areascroll = [self.scrollAreaWidgetContents_1,
+        #                               self.scrollAreaWidgetContents_2,
+        #                               self.scrollAreaWidgetContents_3,
+        #                               self.scrollAreaWidgetContents_4,
+        #                               self.scrollAreaWidgetContents_5]
 
-        self.button_save_and_generate.clicked.connect(self.save_state)
-        self.button_to_download.clicked.connect(self.load_state)
+        self.button_example_text.clicked.connect(lambda: self.print_log(self.comboboxs_generator))
+        self.button_example_text.clicked.connect(lambda: self.print_log(self.comboboxs_solution))
+        self.button_example_text.clicked.connect(lambda: self.print_log(self.textedits_generator))
+        self.button_example_text.clicked.connect(lambda: self.print_log(self.tabels_generator))
+        self.button_example_text.clicked.connect(lambda: self.print_log(self.tabels_generator))
+        self.button_example_text.clicked.connect(lambda: self.print_log(self.tabels_generator))
+        self.button_example_text.clicked.connect(lambda: self.print_log(self.tabels_generator))
+
+        self.action_save_state.triggered.connect(self.handler_save_formstate)
+        self.action_load_state.triggered.connect(self.load_state)
         self.state_file = "widget_state.pickle"
 
         self.unique_key_id = 1000
 
         # Смена tab_index подгрузка констант в массив значений КОСТЫЛЬ придумать как решить !!!!
         self.tabWidget.currentChanged.connect(self.smth_const)
-        print(self.button_answer.objectName())
+
 
 
     # region WorkPlace Generation
@@ -1043,6 +1089,23 @@ class Ui_MainWindow(object):
 
     # endregion Workplace MessageBox
 
+
+    def print_log(self,widget_list):
+
+        print("============================================")
+        print(widget_list.__name__)
+        for widget in widget_list:
+            print(widget)
+
+        print("============================================")
+
+
+
+
+
+
+
+
     # region feature/save_load_pickle
 
     def handler_save_formstate(self):
@@ -1052,9 +1115,9 @@ class Ui_MainWindow(object):
         """
         # Пример использования:
         widget_list = []
-        widget_list.extend(self.comboboxs_generator)
-        widget_list.extend(self.comboboxs_solution)
-        widget_list.extend(self.textedits_generator)
+        widget_list.extend(self.comboboxs_generator) # Все комбобоксы генерации
+        widget_list.extend(self.comboboxs_solution)  # Все комбобоксы порядка решения
+        widget_list.extend(self.textedits_generator) # все
         widget_list.extend(self.tabels_solution)
         widget_list.extend(self.tabels_generator)
         widget_list.extend(self.tabels_const)
@@ -1146,19 +1209,6 @@ class Ui_MainWindow(object):
             pickle.dump(state, file)
             self.show_popup_information("успех", "успешно сохранено")
 
-    def load_state(self, widget_list):
-        """
-        Загружает  данные из рабочей директории, а именно из файла с расширением *.pickle
-        Загрузка пресета
-        :return:
-        """
-        try:
-            with open(self.state_file, 'rb') as file:
-                state = pickle.load(file)
-            self.load_widget_state(widget_list, state)
-        except FileNotFoundError:
-            self.show_popup_critical("Безуспешный поиск","Файл состояния не найден.")
-
     def save_widget_state(self, widget, state):
         """
         Реализация сериализации данных
@@ -1181,32 +1231,80 @@ class Ui_MainWindow(object):
         elif isinstance(widget, QTextEdit):
             state[widget.objectName()] = widget.toPlainText()
 
+    #region черновик загрузки данных
+    def load_state(self):
+        """
+
+        :return:
+        """
+        try:
+            with open(self.state_file, 'rb') as file:
+                saved_state = pickle.load(file)
+                self.restore_widget_state(saved_state)
+                self.show_popup_information("успех", "успешно загружено")
+        except FileNotFoundError:
+            print(f"Файл {self.state_file} не найден.")
+        except Exception as e:
+            print(f"Произошла ошибка при загрузке файла {self.state_file}: {e}")
+
+    def restore_widget_state(self, saved_state):
+        for widget_name, value in saved_state.items():
+            widget = self.findChild((QComboBox, QCheckBox, QDoubleSpinBox, QSpinBox, QTextEdit), widget_name)
+            if widget is not None:
+                self.set_widget_state(widget, value)
+
+    def set_widget_state(self, widget, value):
+        if isinstance(widget, QComboBox):
+            widget.setCurrentIndex(value)
+        elif isinstance(widget, QCheckBox):
+            widget.setChecked(value)
+        elif isinstance(widget, QDoubleSpinBox):
+            widget.setValue(value)
+        elif isinstance(widget, QSpinBox):
+            widget.setValue(value)
+        elif isinstance(widget, QTextEdit):
+            widget.setPlainText(value)
+        #TODO добавить другие условия для других типов виджетов
 
 
-    def load_widget_state(self, widget, state):
-        if widget.objectName() in state:
-            if isinstance(widget, QComboBox):
-                widget.setCurrentIndex(state[widget.objectName()])
-            elif isinstance(widget, QCheckBox):
-                widget.setChecked(state[widget.objectName()])
-            elif isinstance(widget, QSpinBox):
-                widget.setValue(state[widget.objectName()])
-            elif isinstance(widget, QDoubleSpinBox):
-                widget.setValue(state[widget.objectName()])
-            elif isinstance(widget, QTextEdit):
-                widget.setPlainText(state[widget.objectName()])
 
-        # Рекурсивно обходите детей виджета
-        for child_widget in widget.findChildren(QWidget, Qt.FindDirectChildrenOnly):
-            self.load_widget_state(child_widget, state)
+
+    # def load_state(self, widget_list):
+    #     """
+    #     Загружает  данные из рабочей директории, а именно из файла с расширением *.pickle
+    #     Загрузка пресета
+    #     :return:
+    #     """
+    #     try:
+    #         with open(self.state_file, 'rb') as file:
+    #             state = pickle.load(file)
+    #         self.load_widget_state(widget_list, state)
+    #     except FileNotFoundError:
+    #         self.show_popup_critical("Безуспешный поиск","Файл состояния не найден.")
+    #
+    # def load_widget_state(self, widget, state):
+    #     if widget.objectName() in state:
+    #         if isinstance(widget, QComboBox):
+    #             widget.setCurrentIndex(state[widget.objectName()])
+    #         elif isinstance(widget, QCheckBox):
+    #             widget.setChecked(state[widget.objectName()])
+    #         elif isinstance(widget, QSpinBox):
+    #             widget.setValue(state[widget.objectName()])
+    #         elif isinstance(widget, QDoubleSpinBox):
+    #             widget.setValue(state[widget.objectName()])
+    #         elif isinstance(widget, QTextEdit):
+    #             widget.setPlainText(state[widget.objectName()])
+    #
+    #     # Рекурсивно обходите детей виджета
+    #     for child_widget in widget.findChildren(QWidget, Qt.FindDirectChildrenOnly):
+    #         self.load_widget_state(child_widget, state)
 
     # endregion
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "Universal generator MVP 1.1v by ЦЕХ"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "Universal generator 0.1v"))
         self.button_answer.setText(_translate("MainWindow", "Подсчитать ответ"))
         self.label_6.setText(_translate("MainWindow", "Добавить/удалить действие"))
-
         self.button_add_const_field.setText(_translate("MainWindow", "Добавить константное поле"))
         self.button_delete_last_field.setText(_translate("MainWindow", "Удалить последнее поле"))
         self.button_delete_solution.setText(_translate("MainWindow", "-"))
@@ -1231,6 +1329,18 @@ class Ui_MainWindow(object):
         self.label_9.setText(_translate("MainWindow", "Выполнено студентами ТюмГУ МОиАИС"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_4),
                                   _translate("MainWindow", "Настройка констант и ответа"))
+        self.menu.setTitle(_translate("MainWindow", "Файл"))
+        self.menu_2.setTitle(_translate("MainWindow", "Справка"))
+        self.menu_3.setTitle(_translate("MainWindow", "Методический материал"))
+        self.action_save_state.setText(_translate("MainWindow", "Сохранить"))
+        self.action_load_state.setText(_translate("MainWindow", "Загрузить"))
+        self.action_avtor.setText(_translate("MainWindow", "Авторы"))
+        self.action_info_gen.setText(_translate("MainWindow", "О генерации"))
+        self.action_info_solution.setText(_translate("MainWindow", "О решениях"))
+        self.action_client_instruction.setText(_translate("MainWindow", "Инструкция пользования"))
+        self.action_clean_state.setText(_translate("MainWindow", "Очистить"))
+        self.action_2.setText(_translate("MainWindow", "Сохранить как..."))
+
         # regionWorkplace ToolTips
         self.button_answer.setToolTip(
             _translate("MainWindow", "Вычисляет ответ к сгенерированной задаче и выводит его в поле \"Ответ\""))

@@ -5985,3 +5985,5 @@
 __pycache__/
 /.idea/
 test.py
+venv/
+widget_state.pickle
