@@ -1266,6 +1266,8 @@ class Ui_MainWindow(object):
             widget.setPlainText(value)
         #TODO добавить другие условия для других типов виджетов
 
+    # endregion
+    # endregion
 
 
 
