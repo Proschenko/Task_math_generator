@@ -1,17 +1,18 @@
-import pickle
-
-from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget, QSpinBox, QTextEdit, QComboBox, \
-    QCheckBox, QPushButton, QLineEdit, QLabel
-from PyQt5.QtWidgets import QDoubleSpinBox, QMessageBox
-import re
-import random
 import json
-# import pymorphy2
-
+import pickle
+import random
+import re
+import zipfile
 
 import qdarkstyle
+from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QDoubleSpinBox, QMessageBox
+from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QWidget, QSpinBox, QTextEdit, QComboBox, \
+    QCheckBox, QPushButton, QLineEdit, QLabel
+
+
+# import pymorphy2
 
 
 class Ui_MainWindow(object):
@@ -250,6 +251,7 @@ class Ui_MainWindow(object):
         self.spinBox_answer_index.setValue(200)
         # endregion
 
+
         # region naming index
         # ScrollArea1
         self.name_SA1_text_edit_widget = 0
@@ -318,6 +320,11 @@ class Ui_MainWindow(object):
         self.button_example_text.clicked.connect(lambda: self.show_example_text(True))
         self.button_answer.clicked.connect(lambda: self.show_example_answer(True))
 
+        # Выбор типа ответа
+        self.radioButton.clicked.connect(lambda: self.__choice_type_of_answer(1))
+        self.radioButton_2.clicked.connect(lambda: self.__choice_type_of_answer(2))
+        self.radioButton_3.clicked.connect(lambda: self.__choice_type_of_answer(3))
+
         # Кнопки взаимодействия с константами
         self.button_add_const.clicked.connect(self.add_const)
         self.button_delete_const.clicked.connect(self.delete_const)
@@ -326,6 +333,7 @@ class Ui_MainWindow(object):
         self.button_to_download.clicked.connect(self.open_download_folder)
         # Кнопка генерации задач
         self.button_save_and_generate.clicked.connect(self.handler_generation_tasks)
+
 
         # тест новой фичи
         # self.array_list_areascroll = [self.scrollAreaWidgetContents_1,
@@ -388,6 +396,7 @@ class Ui_MainWindow(object):
         # Создаем комбобокс и заполняем его из словаря
         combobox = QtWidgets.QComboBox(self.scrollAreaWidgetContents_1)
         combobox.addItems(self.generators_dict.keys())
+
 
         combobox.setObjectName(self.naming_widget(1, combobox))
 
@@ -1079,9 +1088,7 @@ class Ui_MainWindow(object):
     # Подсчет ответа
     def show_example_answer(self, choice):
         self.start_queue_solution()
-        result_string = "{="
-        result_string += str(self.global_values_generation_and_solutions[self.spinBox_answer_index.value()])
-        result_string += "}"
+        result_string = str(self.global_values_generation_and_solutions[self.spinBox_answer_index.value()])
 
         if choice:
             self.textEdit_2.setText(result_string)
@@ -1103,6 +1110,177 @@ class Ui_MainWindow(object):
     # endregion Workplace example task
     # region Workplace save tasks
     # Кнопка в загрузки
+    def __choice_type_of_answer(self, type_of_ans: int):
+        self.type_of_answer = type_of_ans
+
+    @staticmethod
+    def __check_unique_variable(check_unique_question_inner, task_inner, answer_inner, forbidden_answer_inner):
+        length_check_unique_question = len(check_unique_question_inner)
+        # Преобразование списков в кортежи
+        if type(answer_inner[0]) != list:
+            text_tuple = tuple(task_inner)
+            answer_tuple = tuple(answer_inner)
+            forbidden_answer_tuple = tuple(forbidden_answer_inner)
+        else:
+            text_tuple = tuple(task_inner)
+            answer_tuple = tuple(tuple(pair) for pair in answer_inner)
+            forbidden_answer_tuple = tuple(tuple(pair) for pair in forbidden_answer_inner)
+
+        check_unique_question_inner.add(frozenset((text_tuple, answer_tuple, forbidden_answer_tuple)))
+        if length_check_unique_question == len(check_unique_question_inner):
+            return True
+        else:
+            return False
+
+    # @staticmethod
+    def create_txt_file(self, tasks_massive, type_of_response, name_of_the_questions, file_name):
+        """
+        Метод, создающий txt файл c задачами
+        :param tasks_massive: массив задач в формате (вопрос, ответ)
+        :param type_of_response: переменная, отвечающая за тип ответа
+        :return:
+        """
+        downloads_path = os.path.join(os.path.expanduser("~"), "Downloads", "folder_tasks")
+        if not os.path.exists(downloads_path):
+            os.makedirs(downloads_path)
+        file_path = os.path.join(downloads_path, file_name + ".txt")
+        result_string = ""
+
+        if len(tasks_massive[0]) == 4:
+            for i, (task, answer, forbidden_answer, path_to_graph_img) in enumerate(tasks_massive):
+                construction_of_the_image_output_in_gift_format = str.format('<img src\="@@PLUGINFILE@@/{0}"/>',
+                                                                             path_to_graph_img)
+                tasks_with_graph = task.replace("graph_img", construction_of_the_image_output_in_gift_format)
+                tasks_massive[i] = (tasks_with_graph, answer, forbidden_answer)
+
+        check_unique_question = set()
+        with open(file_path, "w", encoding="utf-8") as file:
+            match type_of_response:
+                case 1:  # краткий ответ
+                    for task, answer, forbidden_answer in tasks_massive:
+                        if self.__check_unique_variable(check_unique_question, task, answer, forbidden_answer):
+                            continue
+
+                        result_answer_str = ""
+                        for ans in answer:
+                            result_answer_str += f"={ans}\n"
+                        result_string += f"::{name_of_the_questions}::" + task + " {" + result_answer_str + "} " + "\n" + "\n"
+                    file.write(result_string)
+
+                case 2:  # множественный выбор, один ответ
+                    for task, answer, forbidden_answer in tasks_massive:
+                        if self.__check_unique_variable(check_unique_question, task, answer, forbidden_answer):
+                            continue
+
+                        all_answers = forbidden_answer.copy()
+                        all_answers.extend(answer)
+                        random.shuffle(all_answers)
+                        string_answer = ""
+                        for value in all_answers:
+                            if value in answer:
+                                string_answer += f"={value}\n"
+                            else:
+                                string_answer += f"~{value}\n"
+                        result_string += f"::{name_of_the_questions}::" + task + " {" + string_answer + "} " + "\n" + "\n"
+                    file.write(result_string)
+
+                case 3:  # множественный выбор, несколько ответов
+                    for task, answer, forbidden_answer in tasks_massive:
+                        if self.__check_unique_variable(check_unique_question, task, answer, forbidden_answer):
+                            continue
+
+                        all_answers = forbidden_answer.copy()
+                        all_answers.extend(answer)
+                        random.shuffle(all_answers)
+                        string_answer = ""
+                        for value in all_answers:
+                            if value in answer:
+                                string_answer += f"~%{100 / len(answer)}%{value}\n"
+                            else:
+                                string_answer += f"~{value}\n"
+                        result_string += f"::{name_of_the_questions}::" + task + " {" + string_answer + "} " + "\n" + "\n"
+                    file.write(result_string)
+
+                case 4:  # пропущенное слово
+                    for task, answer, forbidden_answer in tasks_massive:
+                        if self.__check_unique_variable(check_unique_question, task, answer, forbidden_answer):
+                            continue
+
+                        string_answer = ""
+                        for ans in answer:
+                            string_answer += f"={ans}\n"
+                        split_task = task.split("__")
+                        result_string += f"::{name_of_the_questions}::"
+                        for i in range(len(split_task) - 1):
+                            result_string += f"{split_task[i]} __________"
+                        result_string += f"{split_task[len(split_task) - 1]}" + "{" + string_answer + "}" + "\n" + "\n"
+                    file.write(result_string)
+
+                case 5:  # верно\неверно
+                    for task, answer, forbidden_answer in tasks_massive:
+                        if self.__check_unique_variable(check_unique_question, task, answer, forbidden_answer):
+                            continue
+
+                        result_string += f"::{name_of_the_questions}::" + task + "{" + answer + "}" + "\n" + "\n"
+                    file.write(result_string)
+
+                case 6:  # на соответствие
+                    for task, answer, forbidden_answer in tasks_massive:
+                        if self.__check_unique_variable(check_unique_question, task, answer, forbidden_answer):
+                            continue
+
+                        string_answer = ""
+                        # ::Вопрос 1:: Укажите столицы государств: {
+                        # = Канада -> Оттава
+                        # = Италия -> Рим
+                        # = Япония -> Токио
+                        # = Индия -> Нью Дели}
+                        for quest, ans in answer:
+                            string_answer += f"={quest} -> {ans}\n"
+                        result_string += f"::{name_of_the_questions}::" + task + "{" + string_answer + "}" + "\n" + "\n"
+                    file.write(result_string)
+
+                case 7:  # эссе
+                    for task, answer, forbidden_answer in tasks_massive:
+                        if self.__check_unique_variable(check_unique_question, task, answer, forbidden_answer):
+                            continue
+
+                        result_string += f"::{name_of_the_questions}::" + task + "{}" + "\n" + "\n"
+                    file.write(result_string)
+        print("Количество уникальных вариантов:", len(check_unique_question))
+        print(f"Файл {file_path} успешно создан.")
+
+    @staticmethod
+    def create_zip_file(zip_file_name, *args):
+        try:
+            downloads_path = os.path.join(os.path.expanduser("~"), "Downloads", "folder_tasks")
+            zip_file_name = os.path.join(downloads_path, zip_file_name + ".zip")
+
+            with zipfile.ZipFile(zip_file_name, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                for item in args:
+                    item_path = os.path.join(downloads_path, item)
+
+                    if os.path.exists(item_path):
+                        if os.path.isfile(item_path):
+                            zipf.write(item_path, os.path.basename(item_path))
+                            print(f"Файл {os.path.basename(item_path)} добавлен в архив")
+                        elif os.path.isdir(item_path):
+                            for root, dirs, files in os.walk(item_path):
+                                for file in files:
+                                    file_path = os.path.join(root, file)
+                                    relative_path = os.path.relpath(file_path, item_path)
+                                    zipf.write(file_path, os.path.join(os.path.basename(item_path), relative_path))
+                                    print(f"Файл {file} добавлен в архив")
+                        else:
+                            print(f"Не удалось добавить {item} в архив. Неизвестный тип.")
+                    else:
+                        print(f"Файл или папка {item} не существует.")
+
+        except Exception as e:
+            print(f"Произошла ошибка: {e}")
+        else:
+            print(f"Архив {zip_file_name} успешно создан.")
+
     @staticmethod
     def open_download_folder():
         download_folder = os.path.expanduser("~\Downloads")
@@ -1118,39 +1296,44 @@ class Ui_MainWindow(object):
         count_task = self.spinBox.value()
         array_task = []
         for i in range(count_task):
-            result_string = self.show_example_text(False)
-            result_string = self.replace_word_in_star(result_string)
-            result_string += self.show_example_answer(False)
-            result_string = result_string.replace("::Вопрос ::", "::Вопрос " + str(i + 1) + "::")
-            array_task.append(result_string)
-        self.create_txt_file(array_task, "Your_tasks", "")
-
-    def create_txt_file(self, mas_line, name_file, directory_file):
-        # Получаем путь к папке "Загрузки" на текущей операционной системе
-        downloads_path = os.path.join(os.path.expanduser("~"), "Downloads")
-        # Создаем полный путь к папке
-        folder_path = os.path.join(downloads_path, "folder_tasks", directory_file)
-        # Создаем папку, если она не существует
-        os.makedirs(folder_path, exist_ok=True)
-        # Создаем полный путь к файлу
-        file_path = os.path.join(folder_path, name_file + "0.txt")
-        counter_file_in_directory = 0
-        while True:
-            counter_file_in_directory += 1
-            if os.path.exists(file_path):
-                # print("Файл существует")
-                file_path = os.path.join(folder_path, name_file + " " + str(counter_file_in_directory) + ".txt")
-            else:
-                # print("Файл не существует")
-                break
-
-        # Записываем данные в файл
-        with open(file_path, 'w', encoding="utf-8") as file:
-            for line in mas_line:
-                file.write(line + "\n\n")
+            text_task = self.show_example_text(False)
+            text_task = self.replace_word_in_star(text_task)
+            answer = self.show_example_answer(False)
+            incorrect_answer = IncorrectAnswer.incorrect_answer_number(answer, [1, 2, 3, 4], "*", "/", "+", "-")
+            # text_task = text_task.replace("::Вопрос ::", "::Вопрос " + str(i + 1) + "::")
+            text_task = text_task.replace("::Вопрос ::", "")
+            array_task.append((text_task, [answer], incorrect_answer))
+        file_name = "ИмяФайла"
+        self.create_txt_file(array_task, self.type_of_answer, "Здание", file_name)
         self.show_popup_information("Генерация задач",
-                                    "Файл:" + name_file + " " + str(counter_file_in_directory - 1)
-                                    + ".txt успешно сохранен, проверьте папку загрузки")
+                                    "Файл: " + file_name + ".txt успешно сохранен, проверьте папку загрузки")
+
+    # def create_txt_file(self, mas_line, name_file, directory_file):
+    #     # Получаем путь к папке "Загрузки" на текущей операционной системе
+    #     downloads_path = os.path.join(os.path.expanduser("~"), "Downloads")
+    #     # Создаем полный путь к папке
+    #     folder_path = os.path.join(downloads_path, "folder_tasks", directory_file)
+    #     # Создаем папку, если она не существует
+    #     os.makedirs(folder_path, exist_ok=True)
+    #     # Создаем полный путь к файлу
+    #     file_path = os.path.join(folder_path, name_file + "0.txt")
+    #     counter_file_in_directory = 0
+    #     while True:
+    #         counter_file_in_directory += 1
+    #         if os.path.exists(file_path):
+    #             # print("Файл существует")
+    #             file_path = os.path.join(folder_path, name_file + " " + str(counter_file_in_directory) + ".txt")
+    #         else:
+    #             # print("Файл не существует")
+    #             break
+    #
+    #     # Записываем данные в файл
+    #     with open(file_path, 'w', encoding="utf-8") as file:
+    #         for line in mas_line:
+    #             file.write(line + "\n\n")
+    #     self.show_popup_information("Генерация задач",
+    #                                 "Файл:" + name_file + " " + str(counter_file_in_directory - 1)
+    #                                 + ".txt успешно сохранен, проверьте папку загрузки")
 
     # endregion Workplace save tasks
     # region Workplace MessageBox
@@ -1189,6 +1372,8 @@ class Ui_MainWindow(object):
 
     # endregion Workplace MessageBox
 
+
+=======
     # region WorkPlace Naming Widgets
     def naming_widget(self, context_scrollarea_index, widget_inner):
         match context_scrollarea_index:
@@ -1243,6 +1428,7 @@ class Ui_MainWindow(object):
                 """
         print("im here")
 
+
         main_dict = {
             'ScrollArea1': {
             },
@@ -1291,6 +1477,8 @@ class Ui_MainWindow(object):
             tmp_value = child.item(1, 1)
             data.append(str(tmp_value.text()))
 
+
+=======
             for col in range(2, num_columns):
                 cell_widget = child.cellWidget(1, col)
                 if isinstance(cell_widget, QSpinBox):
@@ -1574,6 +1762,7 @@ if __name__ == "__main__":
     from Combinatorics import Combinatorics
     from Operations import Operations
     from My_exceptions import My_exceptions
+    from Incorrect_answer_module import IncorrectAnswer
 
     app = QtWidgets.QApplication(sys.argv)
     # app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
