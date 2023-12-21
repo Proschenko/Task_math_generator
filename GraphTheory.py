@@ -1,4 +1,5 @@
 import heapq
+import os
 import random
 import string
 import networkx as nx
@@ -78,19 +79,89 @@ class Graph:
             return False
         return True
 
-    def paintilovka(self):
+    def paintilovka(self, choice_values: bool, choice_orientation: bool):
+        """
+        Метод, рисующий граф
+        :param choice_values: нужно ли рисовать веса на графе
+        :param choice_orientation: нужна ли ориентация у графа
+        :return:
+        """
+        plt.figure(figsize=(4, 2))
         # рисуем граф
-        draw_graph = nx.Graph()
+        if choice_orientation:
+            draw_graph = nx.DiGraph()
+        else:
+            draw_graph = nx.Graph()
 
         draw_graph.add_nodes_from(self.nodes)
         for key, value in self.graph.items():
             draw_graph.add_edge(key[0], key[1])
 
         pos = nx.spring_layout(draw_graph)
-        nx.draw(draw_graph, pos=pos, with_labels=True)
-        nx.draw_networkx_edge_labels(draw_graph, pos=pos, edge_labels={(key[0], key[1]): value for key, value in self.graph.items()}, font_color='red')
+        # pos = nx.circular_layout(draw_graph)
+        # print(pos)
+        count = 0
+        # for edge in draw_graph.edges():
+        #     node1, node2 = edge
+        #     point1, point2 = pos[node1], pos[node2]
+        #     for edge2 in draw_graph.edges():
+        #         if edge2 != edge:
+        #             node3, node4 = edge2
+        #             point3, point4 = pos[node3], pos[node4]
+        #             print(node1, node2, node3, self.are_points_collinear(point1, point2, point3))
+        #             count += 1
+        # print(count, len(draw_graph.edges()))
 
-        plt.show()
+        # for node1, point1 in pos.items():
+        #     for node2, point2 in pos.items():
+        #         for node3, point3 in pos.items():
+        #             node_set = {node1, node2, node3}
+        #             if len(node_set) == 3:
+        #                 x_mean = (point1[0] + point2[0] + point3[0]) / 3
+        #                 y_mean = (point1[1] + point2[1] + point3[1]) / 3
+        #                 if abs(x_mean) < 0.1 or abs(y_mean) < 0.1:
+        #                     print(node1, node2, node3, x_mean, y_mean)
+
+        # for node1, (x_coord1, y_coord1) in pos.items():
+        #     for node2, (x_coord2, y_coord2) in pos.items():
+        #         for node3, (x_coord3, y_coord3) in pos.items():
+        #             node_set = {node1, node2, node3}
+        #             if len(node_set) == 3:
+        #                 left_fraction = (y_coord1 - y_coord2) / (y_coord2 - y_coord3)
+        #                 right_fraction = (x_coord1 - x_coord2) / (x_coord2 - x_coord3)
+        #                 if abs(left_fraction - right_fraction) < 0.2:
+        #                     # print(node1, node2, node3, left_fraction - right_fraction)
+        #                     plt.close()
+        #                     self.paintilovka(choice_values, choice_orientation)
+
+        nx.draw(draw_graph, pos=pos, with_labels=True)
+        if choice_values:
+            nx.draw_networkx_edge_labels(draw_graph, pos=pos,
+                                         edge_labels={(key[0], key[1]): value for key, value in self.graph.items()},
+                                         font_color='red')
+
+        # region сохранение графа
+        download_folder = os.path.join(os.path.expanduser("~"), "Downloads", "folder_tasks")
+        image_folder = os.path.join(download_folder, "image_folder")
+        if not os.path.exists(image_folder):
+            os.makedirs(image_folder)
+
+        # Создаем полный путь к файлу
+        path_to_img_graph = ""
+        # image_folder = os.path.join(image_folder, f"graph {0}.png")
+        counter_file_in_directory = -1
+        while True:
+            counter_file_in_directory += 1
+            path_to_img_graph = os.path.join(image_folder, f"graph {counter_file_in_directory}.png")
+            if not os.path.exists(path_to_img_graph):
+                break
+
+        # print(path_to_img_graph)
+        plt.savefig(path_to_img_graph)
+        path_to_img_graph = f"image_folder/graph {counter_file_in_directory}.png"
+        plt.close()
+        return path_to_img_graph
+        # endregion
 
     @staticmethod
     def solution_task_max_flow(object_graph):
