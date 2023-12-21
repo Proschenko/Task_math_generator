@@ -5,6 +5,10 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget, QSpinBox, QTextEdit, QComboBox, \
     QCheckBox, QPushButton, QLineEdit, QLabel
 from PyQt5.QtWidgets import QDoubleSpinBox, QMessageBox
+import re
+import random
+import json
+# import pymorphy2
 
 
 import qdarkstyle
@@ -950,9 +954,74 @@ class Ui_MainWindow(object):
 
             self.global_values_generation_and_solutions[index_value_const] = values_spinbox[0]
 
+
+    # ====WorkPlace Const===============================================================================================
+    # ====Workplace example task========================================================================================
+
+
     # endregion WorkPlace Constregion
     # region Workplace example task
+
     # Получаем текст задания
+    # def agree_with_numerals(self, text):
+    #     morph = pymorphy2.MorphAnalyzer()
+    #     words = re.findall(r'\b(\d+)\s*(\w+)', text)
+    #
+    #     result_text = text
+    #
+    #     for numeral, word in words:
+    #         # Согласовываем слово с числительным
+    #         parsed_word = morph.parse(word)[0]
+    #         if parsed_word.tag.POS in ['NOUN', 'ADJF', 'ADJS', 'NUMR']:
+    #             inflected_word = parsed_word.make_agree_with_number(int(numeral)).word
+    #             result_text = result_text.replace(f"{numeral} {word}", f"{numeral} {inflected_word}")
+    #
+    #     return result_text
+
+    # def correct_text(self, text):
+    #     morph = pymorphy2.MorphAnalyzer()
+    #     words = re.findall(r'\b\w+\b', text)
+    #
+    #     corrected_text = ""
+    #     for word in words:
+    #         parsed_word = morph.parse(word)[0]
+    #         if 'VERB' in parsed_word.tag:
+    #             # Если слово - глагол, попробуем использовать нормальную форму
+    #             corrected_text += parsed_word.normal_form + " "
+    #         else:
+    #             corrected_text += word + " "
+    #
+    #     return corrected_text.strip()
+
+    def replace_word_in_star(self, text):
+
+        with open('word.json', 'r', encoding='utf-8') as json_file:
+            try:
+                data = json.load(json_file)
+            except UnicodeDecodeError as e:
+                print("UnicodeDecodeError:", e)
+
+        # Ищем слово внутри звездочек
+        match = re.search(r'\*\s*(\w+)\s*\*', text)
+
+        if match:
+            search_key = match.group(1)
+
+            if search_key in data:
+                values = data[search_key]
+                if values:
+                    random_value = random.choice(values)
+                    random_value = random_value.lower()
+            else:
+                return text
+
+            # Если найдено, заменяем на новое слово
+            result_text = text.replace(f'*{search_key}*', f'{random_value}')
+            return result_text
+        else:
+            # Возвращаем исходный текст, если ничего не найдено
+            return text
+
     def show_example_text(self, choice):
         result_string = "::Вопрос :: "
         widgets = self.scrollAreaWidgetContents_1.findChildren(QWidget)
@@ -962,6 +1031,10 @@ class Ui_MainWindow(object):
             # Проверка, является ли виджет экземпляром QTextEdit
             if isinstance(widget, QTextEdit):
                 result_string += widget.toPlainText()
+                result_string = self.replace_word_in_star(result_string)
+                # morph = pymorphy2.MorphAnalyzer()
+
+                # result_string = self.agree_with_numerals(result_string)
                 result_string += " "
 
             # Проверка, является ли виджет экземпляром QComboBox
@@ -1020,6 +1093,7 @@ class Ui_MainWindow(object):
         array_task = []
         for i in range(count_task):
             result_string = self.show_example_text(False)
+            result_string = self.replace_word_in_star(result_string)
             result_string += self.show_example_answer(False)
             result_string = result_string.replace("::Вопрос ::", "::Вопрос " + str(i + 1) + "::")
             array_task.append(result_string)
