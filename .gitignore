@@ -5987,3 +5987,5 @@ __pycache__/
 test.py
 venv/
 widget_state.pickle
+/output.json
+/test.json

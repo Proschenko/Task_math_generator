@@ -251,6 +251,26 @@ class Ui_MainWindow(object):
         self.spinBox_answer_index.setValue(200)
         # endregion
 
+
+        # region naming index
+        # ScrollArea1
+        self.name_SA1_text_edit_widget = 0
+        self.name_SA1_combobox_and_SA3_Table_widget = 0
+
+        # ScrollArea2
+        self.name_SA2_combobox_and_SA4_Table_widget = 0
+
+        # ScrollArea3
+        # self.name_SA3_Table_widget = 0
+
+        # ScrollArea4
+        # self.name_SA4_Table_widget = 0
+
+        # ScrollArea5
+        self.name_SA5_Table_widget = 0
+        # Зависимости индексов привязать от 2 к 4, от 1 к 3
+        # endregion
+
         # region setup2
         self.retranslateUi(MainWindow)
         self.tabWidget.setCurrentIndex(0)
@@ -314,7 +334,15 @@ class Ui_MainWindow(object):
         # Кнопка генерации задач
         self.button_save_and_generate.clicked.connect(self.handler_generation_tasks)
 
-        self.action_save_state.triggered.connect(self.handler_save_formstate)
+
+        # тест новой фичи
+        # self.array_list_areascroll = [self.scrollAreaWidgetContents_1,
+        #                               self.scrollAreaWidgetContents_2,
+        #                               self.scrollAreaWidgetContents_3,
+        #                               self.scrollAreaWidgetContents_4,
+        #                               self.scrollAreaWidgetContents_5]
+
+        self.action_save_state.triggered.connect(self.handler_save_formstate_v2)
         self.action_load_state.triggered.connect(self.load_state)
         self.state_file = "widget_state.pickle"
 
@@ -357,7 +385,10 @@ class Ui_MainWindow(object):
     def add_text_edit(self):
         text_edit = QtWidgets.QTextEdit(self.scrollAreaWidgetContents_1)
         text_edit.setText("Изменяемое константное поле")
+        text_edit.setObjectName(self.naming_widget(1, text_edit))
+
         self.textedits_generator.append(text_edit)
+
         # Дополнительные настройки для виджета QTextEdit...
         self.vertical_layout.addWidget(text_edit)
 
@@ -365,6 +396,9 @@ class Ui_MainWindow(object):
         # Создаем комбобокс и заполняем его из словаря
         combobox = QtWidgets.QComboBox(self.scrollAreaWidgetContents_1)
         combobox.addItems(self.generators_dict.keys())
+
+
+        combobox.setObjectName(self.naming_widget(1, combobox))
 
         self.comboboxs_generator.append(combobox)
         self.vertical_layout.addWidget(combobox)
@@ -374,6 +408,8 @@ class Ui_MainWindow(object):
         table = QTableWidget(self.tab_2)
         table.verticalHeader().setVisible(False)
         table.horizontalHeader().setVisible(False)
+        table.setObjectName(self.naming_widget(3, table))
+
         combobox_key = combobox.currentText()
         values = self.generators_dict[combobox_key]
 
@@ -614,6 +650,10 @@ class Ui_MainWindow(object):
     def add_combobox_queue_solution(self):
         combobox = QtWidgets.QComboBox(self.scrollAreaWidgetContents_2)
         combobox.addItems(self.solution_dict.keys())
+        combobox.setObjectName(self.naming_widget(2, combobox))
+        print(combobox.objectName())
+
+
         self.comboboxs_solution.append(combobox)
         self.vertical_layout2.addWidget(combobox)
 
@@ -622,6 +662,9 @@ class Ui_MainWindow(object):
         table = QTableWidget(self.tab_3)
         table.verticalHeader().setVisible(False)
         table.horizontalHeader().setVisible(False)
+        table.setObjectName(self.naming_widget(4, table))
+        print(table.objectName())
+
         combobox_key = combobox.currentText()
         values = self.solution_dict[combobox_key]
 
@@ -993,25 +1036,27 @@ class Ui_MainWindow(object):
                 print("UnicodeDecodeError:", e)
 
         # Ищем слово внутри звездочек
-        match = re.search(r'\*\s*(\w+)\s*\*', text)
+        matches = re.finditer(r'\*\s*(\w*)\s*\*', text)
 
-        if match:
+        for match in matches:
             search_key = match.group(1)
 
-            if search_key in data:
-                values = data[search_key]
+            # Проверка наличия ключа в словаре
+            if search_key.lower() in data:
+                values = data[search_key.lower()]
+
+                # Проверка наличия значений по ключу
                 if values:
-                    random_value = random.choice(values)
-                    random_value = random_value.lower()
+                    random_value = random.choice(values).lower()
+                else:
+                    continue
             else:
-                return text
+                continue
 
             # Если найдено, заменяем на новое слово
-            result_text = text.replace(f'*{search_key}*', f'{random_value}')
-            return result_text
-        else:
-            # Возвращаем исходный текст, если ничего не найдено
-            return text
+            text = text.replace(f'*{search_key}*', f'{random_value}')
+
+        return text
 
     def show_example_text(self, choice):
         result_string = "::Вопрос :: "
@@ -1036,7 +1081,6 @@ class Ui_MainWindow(object):
 
         self.button_answer.setEnabled(True)
         if choice:
-
             self.textEdit.setText(result_string)
         else:
             return result_string
@@ -1328,104 +1372,202 @@ class Ui_MainWindow(object):
 
     # endregion Workplace MessageBox
 
-    def print_log(self, widget_list):
-        print("============================================")
-        print(widget_list.__name__)
-        for widget in widget_list:
-            print(widget)
 
-        print("============================================")
+=======
+    # region WorkPlace Naming Widgets
+    def naming_widget(self, context_scrollarea_index, widget_inner):
+        match context_scrollarea_index:
+            case 1:
+                if isinstance(widget_inner, QComboBox):
+                    tmp = f"{str(type(widget_inner).__name__)}_{context_scrollarea_index}_{self.name_SA1_combobox_and_SA3_Table_widget}"
+                    return tmp
+                elif isinstance(widget_inner, QTextEdit):
+                    tmp = f"{str(type(widget_inner).__name__)}_{context_scrollarea_index}_{self.name_SA1_text_edit_widget}"
+                    self.name_SA1_text_edit_widget += 1
+                    return tmp
+                else:
+                    self.show_popup_critical("Ошибка", str("Неизвестный виджет передан в функцию именования") + "\n")
 
+            case 2:
+                if isinstance(widget_inner, QComboBox):
+                    tmp = f"{str(type(widget_inner).__name__)}_{context_scrollarea_index}_{self.name_SA2_combobox_and_SA4_Table_widget}"
+                    return tmp
+                else:
+                    self.show_popup_critical("Ошибка", str("Неизвестный виджет передан в функцию именования") + "\n")
+
+            case 3:
+                if isinstance(widget_inner, QTableWidget):
+                    tmp = f"{str(type(widget_inner).__name__)}_{context_scrollarea_index}_{self.name_SA1_combobox_and_SA3_Table_widget}"
+                    self.name_SA1_combobox_and_SA3_Table_widget += 1
+                    return tmp
+                else:
+                    self.show_popup_critical("Ошибка", str("Неизвестный виджет передан в функцию именования") + "\n")
+
+            case 4:
+                if isinstance(widget_inner, QTableWidget):
+                    tmp = f"{str(type(widget_inner).__name__)}_{context_scrollarea_index}_{self.name_SA2_combobox_and_SA4_Table_widget}"
+                    self.name_SA2_combobox_and_SA4_Table_widget += 1
+                    return tmp
+                else:
+                    self.show_popup_critical("Ошибка", str("Неизвестный виджет передан в функцию именования") + "\n")
+            case 5:
+                if isinstance(widget_inner, QTableWidget):
+                    tmp = f"{str(type(widget_inner).__name__)}_{context_scrollarea_index}_{self.name_SA2_combobox_and_SA4_Table_widget}"
+                    self.name_SA5_Table_widget += 1
+                    return tmp
+                else:
+                    self.show_popup_critical("Ошибка", str("Неизвестный виджет передан в функцию именования") + "\n")
+
+    # endregion
     # region feature/save_load_pickle
 
-    def handler_save_formstate(self):
+    def handler_save_formstate_v2(self):
         """
-        Функция запуска сохранения пресета (состояния формы)
-        :return:
-        """
-        # Пример использования:
-        widget_list = []
-        widget_list.extend(self.comboboxs_generator)  # Все комбобоксы генерации
-        widget_list.extend(self.comboboxs_solution)  # Все комбобоксы порядка решения
-        widget_list.extend(self.textedits_generator)  # все
-        widget_list.extend(self.tabels_solution)
-        widget_list.extend(self.tabels_generator)
-        widget_list.extend(self.tabels_const)
-        widget_list.append(self.spinBox_answer_index)
+                Функция запуска сохранения пресета (состояния формы)
+                :return:
+                """
+        print("im here")
 
-        flat_widget_list = self.flatten_widget_list(widget_list)
 
-        # Обработка таблиц и извлечение детей из них
-        for i, widget in enumerate(flat_widget_list):
-            if isinstance(widget, QTableWidget):
-                children = self.extract_widgets(widget)
-                if children is not None:
-                    flat_widget_list.extend(children)
+        main_dict = {
+            'ScrollArea1': {
+            },
+            'ScrollArea2': {
+            },
+            'ScrollArea3': {
+            },
+            'ScrollArea4': {
+            },
+            'ScrollArea5': {
+            }
+        }
 
-        filtered_widget_list = [widget for widget in flat_widget_list if not isinstance(widget, QTableWidget)]
+        children1_combobox = self.scrollAreaWidgetContents_1.findChildren(QComboBox)
+        children1_textedit = self.scrollAreaWidgetContents_1.findChildren(QTextEdit)
 
-        # name tables
-        for widget in filtered_widget_list:
-            tmp = self.dynamic_named_widgets(widget)
-            widget.setObjectName(tmp)
-            print(tmp)
+        for child in children1_textedit:
+            main_dict['ScrollArea1'][child.objectName()] = child.toPlainText()
 
-        self.save_state(filtered_widget_list)
+        for child in children1_combobox:
+            main_dict['ScrollArea1'][child.objectName()] = child.currentText()
 
-    def dynamic_named_widgets(self, widget_inner):
-        """
-        function -> get name for widget
-        
-        :param widget_inner:  any widget from pyqt5 
-        :return:  str -> unique_name for widget
-        """
-        tmp_string = f"_{self.unique_key_id}"
-        self.unique_key_id += 1
-        return f"{str(type(widget_inner).__name__)}{tmp_string}"
+        children2_combobox = self.scrollAreaWidgetContents_2.findChildren(QComboBox)
 
-    def extract_widgets(self, table):
-        """
-        Высокоуровневую таблицу  приводит к низкоуровневым виджетам
-        
-        :param table:  входная таблица размерами 2*n 
-        :return:  список виджетов хранящихся во второй строке таблицы
-        """
-        second_row_widgets = []
+        for child in children2_combobox:
+            main_dict['ScrollArea2'][child.objectName()] = child.currentText()
 
-        for column in range(table.columnCount()):
-            item = table.cellWidget(1, column)
-            if item:
-                second_row_widgets.append(item)
+        children3_table = self.scrollAreaWidgetContents_3.findChildren(QTableWidget)
 
-        for widget in second_row_widgets:
-            if isinstance(widget, QLabel):
-                print('Label:', widget.text())
-            elif isinstance(widget, QLineEdit):
-                print('LineEdit:', widget.text())
-            elif isinstance(widget, QComboBox):
-                print('ComboBox:', widget.currentText())
-            elif isinstance(widget, QPushButton):
-                print('Button: Clicked!')
-            elif isinstance(widget, QDoubleSpinBox):
-                print('doubleSpinBox: ', widget.value())
-            elif isinstance(widget, QSpinBox):
-                print('SpinBox: ', widget.value())
-        return second_row_widgets
+        for child in children3_table:
+            # Получение размеров таблицы
+            num_columns = child.columnCount()
 
-    def flatten_widget_list(self, widget_list):
-        """
-        упрощает многомерный список до одномерного
-        [[][][]] -> []
-        :param widget_list:  многомерный список виджетов
-        :return:  одномерный список виджетов
-        """
-        flat_list = []
-        for widget in widget_list:
-            if isinstance(widget, list):
-                flat_list.extend(self.flatten_widget_list(widget))
-            else:
-                flat_list.append(widget)
-        return flat_list
+            # Получение данных
+
+            header_data = []
+            data = []
+
+            for col in range(num_columns):
+                tmp_value = child.item(0, col)
+                header_data.append(str(tmp_value.text()))
+            print(header_data)
+
+            tmp_value = child.item(1, 0)
+            data.append(str(tmp_value.text()))
+            tmp_value = child.item(1, 1)
+            data.append(str(tmp_value.text()))
+
+
+=======
+            for col in range(2, num_columns):
+                cell_widget = child.cellWidget(1, col)
+                if isinstance(cell_widget, QSpinBox):
+                    data.append(cell_widget.value())
+
+            table_data = [header_data, data]
+
+            print("Table Data 3:", table_data)
+            main_dict['ScrollArea3'][child.objectName()] = table_data
+
+
+
+        children4_table = self.scrollAreaWidgetContents_4.findChildren(QTableWidget)
+
+        for child in children4_table:
+            # Получение размеров таблицы
+            num_columns = child.columnCount()
+
+            # Получение данных
+
+            header_data = []
+            data = []
+
+            for col in range(num_columns):
+                tmp_value = child.item(0, col)
+                header_data.append(str(tmp_value.text()))
+            print(header_data)
+
+            tmp_value = child.item(1, 0)
+            data.append(str(tmp_value.text()))
+            tmp_value = child.item(1, 1)
+            data.append(str(tmp_value.text()))
+
+            for col in range(2, num_columns):
+                cell_widget = child.cellWidget(1, col)
+                if isinstance(cell_widget, QSpinBox):
+                    data.append(cell_widget.value())
+
+            table_data = [header_data, data]
+
+            print("Table Data 4:", table_data)
+            main_dict['ScrollArea4'][child.objectName()] = table_data
+
+
+        children5_table = self.scrollAreaWidgetContents_5.findChildren(QTableWidget)
+
+        for child in children5_table:
+            # Получение размеров таблицы
+            num_columns = child.columnCount()
+
+            # Получение данных
+
+            header_data = []
+            data = []
+
+            for col in range(num_columns):
+                tmp_value = child.item(0, col)
+                header_data.append(str(tmp_value.text()))
+            print(header_data)
+
+            tmp_value = child.item(1, 0)
+            data.append(str(tmp_value.text()))
+            tmp_value = child.item(1, 1)
+            data.append(str(tmp_value.text()))
+
+            for col in range(2, num_columns):
+                cell_widget = child.cellWidget(1, col)
+                if isinstance(cell_widget, QSpinBox):
+                    data.append(cell_widget.value())
+
+
+
+            # Двумерный массив строк с шапкой и значениями из второй строки
+            table_data = [header_data, data]
+
+            print("Table Data 5:", table_data)
+            main_dict['ScrollArea5'][child.objectName()] = table_data
+
+        # Преобразование словаря в JSON-строку
+        json_string = json.dumps(main_dict, indent=2)
+
+        # Сохранение JSON-строки в файл
+        with open('output.json', 'w') as json_file:
+            json_file.write(json_string)
+
+        # Ваш JSON-файл
+        json_file_path = 'output.json'
+
+        self.show_popup_information("успех", "успешно сохранено в output.json")
 
     def save_state(self, widget_list):
         """
@@ -1436,7 +1578,6 @@ class Ui_MainWindow(object):
         self.save_widget_state(widget_list, state)
         with open(self.state_file, 'wb') as file:
             pickle.dump(state, file)
-            self.show_popup_information("успех", "успешно сохранено")
 
     def save_widget_state(self, widget, state):
         """
@@ -1624,7 +1765,7 @@ if __name__ == "__main__":
     from Incorrect_answer_module import IncorrectAnswer
 
     app = QtWidgets.QApplication(sys.argv)
-    app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+    # app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     MainWindow = QtWidgets.QMainWindow()
     ui = Ui_MainWindow()
     ui.setupUi(MainWindow)
