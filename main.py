@@ -169,13 +169,21 @@ class Ui_MainWindow(object):
         self.spinBox_answer_index.setMinimum(100)
         self.spinBox_answer_index.setMaximum(399)
         self.spinBox_answer_index.setObjectName("spinBox_answer_index")
-        self.label_9 = QtWidgets.QLabel(self.tab_4)
-        self.label_9.setGeometry(QtCore.QRect(740, 540, 281, 71))
-        self.label_9.setTextFormat(QtCore.Qt.AutoText)
-        self.label_9.setScaledContents(False)
-        self.label_9.setAlignment(QtCore.Qt.AlignCenter)
-        self.label_9.setWordWrap(False)
-        self.label_9.setObjectName("label_9")
+        self.radioButton = QtWidgets.QRadioButton(self.tab_4)
+        self.radioButton.setGeometry(QtCore.QRect(720, 460, 321, 20))
+        self.radioButton.setChecked(True)
+        self.radioButton.setObjectName("radioButton")
+        self.radioButton_2 = QtWidgets.QRadioButton(self.tab_4)
+        self.radioButton_2.setGeometry(QtCore.QRect(720, 490, 321, 20))
+        self.radioButton_2.setChecked(False)
+        self.radioButton_2.setObjectName("radioButton_2")
+        self.label_10 = QtWidgets.QLabel(self.tab_4)
+        self.label_10.setGeometry(QtCore.QRect(720, 415, 321, 31))
+        self.label_10.setAlignment(QtCore.Qt.AlignCenter)
+        self.label_10.setObjectName("label_10")
+        self.radioButton_3 = QtWidgets.QRadioButton(self.tab_4)
+        self.radioButton_3.setGeometry(QtCore.QRect(720, 520, 321, 20))
+        self.radioButton_3.setObjectName("radioButton_3")
         self.tabWidget.addTab(self.tab_4, "")
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
@@ -289,7 +297,7 @@ class Ui_MainWindow(object):
         self.button_add_solution.clicked.connect(self.add_combobox_queue_solution)
         self.button_delete_solution.clicked.connect(self.delete_last_combobox_queue_solution)
         # Кнопки генерации примера задачи и ответа к ней
-        #self.button_example_text.clicked.connect(lambda: self.show_example_text(True))
+        self.button_example_text.clicked.connect(lambda: self.show_example_text(True))
         self.button_answer.clicked.connect(lambda: self.show_example_answer(True))
 
         # Кнопки взаимодействия с константами
@@ -960,7 +968,7 @@ class Ui_MainWindow(object):
 
 
     # endregion WorkPlace Constregion
-    # region Workplace example task
+    # region WorkPlace replace words
 
     # Получаем текст задания
     # def agree_with_numerals(self, text):
@@ -1165,7 +1173,6 @@ class Ui_MainWindow(object):
 
 
     def print_log(self,widget_list):
-
         print("============================================")
         print(widget_list.__name__)
         for widget in widget_list:
@@ -1378,7 +1385,7 @@ class Ui_MainWindow(object):
     # endregion
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "Universal generator 0.1v"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "Universal generator 1.0v"))
         self.button_answer.setText(_translate("MainWindow", "Подсчитать ответ"))
         self.label_6.setText(_translate("MainWindow", "Добавить/удалить действие"))
         self.button_add_const_field.setText(_translate("MainWindow", "Добавить константное поле"))
@@ -1402,7 +1409,6 @@ class Ui_MainWindow(object):
         self.button_add_const.setText(_translate("MainWindow", "+"))
         self.label_7.setText(_translate("MainWindow", "Добавить/удалить константу"))
         self.label_8.setText(_translate("MainWindow", "Укажите индекс в котором хранится ответ"))
-        self.label_9.setText(_translate("MainWindow", "Выполнено студентами ТюмГУ МОиАИС"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_4),
                                   _translate("MainWindow", "Настройка констант и ответа"))
         self.menu.setTitle(_translate("MainWindow", "Файл"))
@@ -1441,6 +1447,10 @@ class Ui_MainWindow(object):
         self.button_save_and_generate.setToolTip(
             _translate("MainWindow", "Генерирует и сохраняет задачи в формате .gift в соответствии с примером задачи"))
         self.button_to_download.setToolTip(_translate("MainWindow", "Открывает в проводнике папку Downloads"))
+        self.radioButton.setText(_translate("MainWindow", "Свободный ответ "))
+        self.radioButton_2.setText(_translate("MainWindow", "Множественный выбор  (один правильный)"))
+        self.label_10.setText(_translate("MainWindow", "Тип ответа, для задач"))
+        self.radioButton_3.setText(_translate("MainWindow", "Множественный выбор  (несколько правильных)"))
         self.textEdit.setToolTip(_translate("MainWindow",
                                             "Здесь отображается пример сгенерированной задачи в соответствии с созданным шаблоном, указанном в \"Поле для создания задачи\""))
         self.button_example_text.setToolTip(_translate("MainWindow",
