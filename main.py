@@ -4,15 +4,21 @@ import random
 import re
 import zipfile
 
+from info_page import HelpDialog
+
 import qdarkstyle
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QDoubleSpinBox, QMessageBox
 from PyQt5.QtWidgets import QTableWidget, QTableWidgetItem, QWidget, QSpinBox, QTextEdit, QComboBox, \
     QCheckBox, QPushButton, QLineEdit, QLabel
 
 
 # import pymorphy2
+
+
+
 
 
 class Ui_MainWindow(object):
@@ -108,6 +114,7 @@ class Ui_MainWindow(object):
         self.textEdit = QtWidgets.QTextEdit(self.tab)
         self.textEdit.setGeometry(QtCore.QRect(20, 640, 761, 101))
         self.textEdit.setReadOnly(True)
+        self.textEdit.setFont(QFont("Arial", 14))
         self.textEdit.setObjectName("textEdit")
         self.label_5 = QtWidgets.QLabel(self.tab)
         self.label_5.setGeometry(QtCore.QRect(420, 740, 141, 21))
@@ -344,7 +351,8 @@ class Ui_MainWindow(object):
 
         self.action_save_state.triggered.connect(self.handler_save_formstate_v2)
         self.action_load_state.triggered.connect(self.load_state)
-        self.state_file = "widget_state.pickle"
+        self.action_client_instruction.triggered.connect(self.show_help_dialog)
+        self.state_file = "output.json"
 
         self.unique_key_id = 1000
 
@@ -382,11 +390,18 @@ class Ui_MainWindow(object):
                                ['Максимальное количество ребер из вершины', 2, 20]]
     }
 
+    @staticmethod
+    def show_help_dialog():
+        # Создаем и отображаем диалоговое окно справки
+        help_dialog = HelpDialog()
+        help_dialog.exec_()
+
     def add_text_edit(self):
         text_edit = QtWidgets.QTextEdit(self.scrollAreaWidgetContents_1)
         text_edit.setText("Изменяемое константное поле")
         text_edit.setObjectName(self.naming_widget(1, text_edit))
-
+        font = QFont("Arial", 14)
+        text_edit.setFont(font)
         self.textedits_generator.append(text_edit)
 
         # Дополнительные настройки для виджета QTextEdit...
@@ -397,6 +412,8 @@ class Ui_MainWindow(object):
         combobox = QtWidgets.QComboBox(self.scrollAreaWidgetContents_1)
         combobox.addItems(self.generators_dict.keys())
 
+        font = QFont("Arial", 14)
+        combobox.setFont(font)
 
         combobox.setObjectName(self.naming_widget(1, combobox))
 
@@ -652,7 +669,8 @@ class Ui_MainWindow(object):
         combobox.addItems(self.solution_dict.keys())
         combobox.setObjectName(self.naming_widget(2, combobox))
         print(combobox.objectName())
-
+        font = QFont("Arial", 14)
+        combobox.setFont(font)
 
         self.comboboxs_solution.append(combobox)
         self.vertical_layout2.addWidget(combobox)
@@ -1373,7 +1391,6 @@ class Ui_MainWindow(object):
     # endregion Workplace MessageBox
 
 
-=======
     # region WorkPlace Naming Widgets
     def naming_widget(self, context_scrollarea_index, widget_inner):
         match context_scrollarea_index:
@@ -1426,8 +1443,6 @@ class Ui_MainWindow(object):
                 Функция запуска сохранения пресета (состояния формы)
                 :return:
                 """
-        print("im here")
-
 
         main_dict = {
             'ScrollArea1': {
@@ -1478,7 +1493,6 @@ class Ui_MainWindow(object):
             data.append(str(tmp_value.text()))
 
 
-=======
             for col in range(2, num_columns):
                 cell_widget = child.cellWidget(1, col)
                 if isinstance(cell_widget, QSpinBox):
@@ -1564,58 +1578,53 @@ class Ui_MainWindow(object):
         with open('output.json', 'w') as json_file:
             json_file.write(json_string)
 
-        # Ваш JSON-файл
-        json_file_path = 'output.json'
+
 
         self.show_popup_information("успех", "успешно сохранено в output.json")
 
-    def save_state(self, widget_list):
-        """
-        Сериализует и сохраняет данные в рабочей директории с расширением *.pickle
-        :return: 
-        """
-        state = {}
-        self.save_widget_state(widget_list, state)
-        with open(self.state_file, 'wb') as file:
-            pickle.dump(state, file)
 
-    def save_widget_state(self, widget, state):
-        """
-        Реализация сериализации данных
-        :param widget:  виджет
-        :param state:   словарь куда идет запись состояние
-        :return: обновленный словарь
-        """
-        if isinstance(widget, QComboBox):
-            state[widget.objectName()] = widget.currentIndex()
-
-        elif isinstance(widget, QCheckBox):
-            state[widget.objectName()] = widget.isChecked()
-
-        elif isinstance(widget, QDoubleSpinBox):
-            state[widget.objectName()] = widget.value()
-
-        elif isinstance(widget, QSpinBox):
-            state[widget.objectName()] = widget.value()
-
-        elif isinstance(widget, QTextEdit):
-            state[widget.objectName()] = widget.toPlainText()
-
-    # region черновик загрузки данных
     def load_state(self):
-        """
 
-        :return:
-        """
+
         try:
-            with open(self.state_file, 'rb') as file:
-                saved_state = pickle.load(file)
-                self.restore_widget_state(saved_state)
+            # Чтение JSON-файла в словарь
+            # TODO раскоментить
+            #with open(self.state_file, 'r') as json_file:
+            with open("test.json", 'r') as json_file:
+
+                loaded_dict = json.load(json_file)
                 self.show_popup_information("успех", "успешно загружено")
         except FileNotFoundError:
             print(f"Файл {self.state_file} не найден.")
         except Exception as e:
             print(f"Произошла ошибка при загрузке файла {self.state_file}: {e}")
+
+
+
+
+        # Вывод результата
+        for key, value in loaded_dict.items():
+            print(f"Key: {key}")
+            if isinstance(value, dict):
+                for sub_key, sub_value in value.items():
+                    print(f"  Sub-Key: {sub_key}")
+                    print(f"  Sub-Value: {sub_value}")
+            elif isinstance(value, list):
+                for sub_value in value:
+                    print(f"  Sub-Value: {sub_value}")
+            else:
+                print(f"Value: {value}")
+            print('-' * 20)
+
+
+
+
+
+
+
+
+    # region черновик загрузки данных
+
 
     def restore_widget_state(self, saved_state):
         for widget_name, value in saved_state.items():
@@ -1695,7 +1704,7 @@ class Ui_MainWindow(object):
         self.button_delete_const.setText(_translate("MainWindow", "-"))
         self.button_add_const.setText(_translate("MainWindow", "+"))
         self.label_7.setText(_translate("MainWindow", "Добавить/удалить константу"))
-        self.label_8.setText(_translate("MainWindow", "Укажите индекс в котором хранится ответ"))
+        self.label_8.setText(_translate("MainWindow", "Укажите индекс, в котором хранится ответ"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.tab_4),
                                   _translate("MainWindow", "Настройка констант и ответа"))
         self.menu.setTitle(_translate("MainWindow", "Файл"))
@@ -1765,7 +1774,7 @@ if __name__ == "__main__":
     from Incorrect_answer_module import IncorrectAnswer
 
     app = QtWidgets.QApplication(sys.argv)
-    # app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+    #app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
     MainWindow = QtWidgets.QMainWindow()
     ui = Ui_MainWindow()
     ui.setupUi(MainWindow)
